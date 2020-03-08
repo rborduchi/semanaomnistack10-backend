@@ -16,7 +16,7 @@ module.exports = {
         let dev = await Dev.findOne({github_username});
 
         if (!dev) {
-            const apiResponse = await axios.get(`https://api.github.com/users/${github_username}`)
+            const apiResponse = await axios.get(`https://api.github.com/users/${github_username}`);
     
             const { name = login, avatar_url, bio } = apiResponse.data;
         
@@ -38,5 +38,35 @@ module.exports = {
         }       
     
         return response.json(dev);
+    },
+
+    async update(request, response) {
+        const { github_username, techs, latitude, longitude } = request.body;
+
+        let dev = await Dev.findById(request.params.id);
+
+        const apiResponse = await axios.get(`https://api.github.com/users/${github_username}`);
+        const { name = login, avatar_url, bio } = apiResponse.data;        
+        const techsArray = ParseStringAsArray(techs);
+        
+        const location = {
+            type: 'Point',
+            coordinates: [longitude, latitude],
+        };
+
+        dev.name = name;
+        dev.bio = bio;
+        dev.avatar_url = avatar_url;
+        dev.techs = techsArray;
+        dev.location = location;
+
+        await Dev.update(dev);
+
+        return response.json(dev);
+    },
+
+    async delete(request, response) {
+        await Dev.findByIdAndDelete(request.params.id);
+        response.sendStatus(204);
     }
 };
